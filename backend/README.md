@@ -24,6 +24,43 @@ APP_TIMEZONE=Asia/Shanghai
 LOG_LEVEL=INFO
 ```
 
+### AICO 双环境（仅改 AICO_HOST 即切换 DB）
+
+If you have both AICO test/prod environments and want the backend to automatically use different DB credentials when you switch `AICO_HOST`, define:
+
+```
+# Map AICO_HOST to a profile
+AICO_HOST_TEST=20.17.x.x
+AICO_HOST_PROD=20.17.y.y
+
+# Profile-specific DB (applies to both source/target unless SRC_/DST_ are also provided)
+TEST_URL=jdbc:mysql://<host>:<port>/<test_db>?serverTimezone=Asia/Shanghai
+TEST_USERNAME=<db_user>
+TEST_PASSWORD=<db_password>
+
+PROD_URL=jdbc:mysql://<host>:<port>/<prod_db>?serverTimezone=Asia/Shanghai
+PROD_USERNAME=<db_user>
+PROD_PASSWORD=<db_password>
+```
+
+You can also override only the target DB (where `scenarios` live) via `TEST_DST_URL` / `PROD_DST_URL` (and username/password variants).
+
+### AICO 双环境（同一个 DB 内切换 scenario 配置）
+
+If you keep a single database but store different AICO credentials/kb mappings for test/prod, keep knowledge items bound to the user's `scenario_id` and store a second scenario row for test (common convention: `scenario_code` + `_test`). You can optionally bind each row to a specific AICO host via `scenarios.aico_host`.
+
+```
+ALTER TABLE scenarios ADD COLUMN aico_host VARCHAR(255) NULL;
+```
+
+When syncing, the backend will pick the AICO-config row in this order:
+
+- If `AICO_HOST` matches `AICO_HOST_TEST`: prefer `<scenario_code>_test`
+- If `AICO_HOST` matches `AICO_HOST_PROD`: prefer `<scenario_code>`
+- If a candidate row has `aico_host == AICO_HOST`, it is preferred
+
+The chosen row is used only for AICO calls (token/pid/kb_id/delete/upload/online). Knowledge items are still taken from the user's `scenario_id`.
+
 ## Local setup
 ```bash
 cd /Users/yunshu/Documents/1208learn

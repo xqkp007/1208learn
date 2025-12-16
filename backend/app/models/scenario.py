@@ -22,6 +22,9 @@ class Scenario(Base):
     aico_user_id = Column(Integer, nullable=False)
     aico_project_name = Column(String(100), nullable=False)
     aico_kb_name = Column(String(100), nullable=False)
+    # Bind this scenario's AICO config to a specific AICO_HOST (test/prod).
+    # When null, it is treated as a default config.
+    aico_host = Column(String(255), nullable=True)
 
     aico_cached_pid = Column(Integer, nullable=True)
     aico_cached_kb_id = Column(Integer, nullable=True)

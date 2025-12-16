@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ...core.security import get_current_user
@@ -42,6 +44,7 @@ def create_scenario(body: ScenarioCreate) -> ScenarioOut:
         aico_user_id=body.aico_user_id,
         aico_project_name=body.aico_project_name,
         aico_kb_name=body.aico_kb_name,
+        aico_host=body.aico_host,
         sync_schedule=body.sync_schedule,
     )
     return ScenarioOut.from_orm(scenario)
@@ -58,6 +61,7 @@ def update_scenario(scenario_id: int, body: ScenarioUpdate) -> ScenarioOut:
             aico_user_id=body.aico_user_id,
             aico_project_name=body.aico_project_name,
             aico_kb_name=body.aico_kb_name,
+            aico_host=body.aico_host,
             sync_schedule=body.sync_schedule,
         )
     except NotFoundError as exc:
@@ -77,15 +81,27 @@ def trigger_sync(
             detail="Forbidden: scenario mismatch",
         )
 
+    run_id = uuid4().hex[:8]
+    logger.info("AICO sync requested (run_id=%s, scenario_id=%s, user_id=%s)", run_id, scenario_id, current_user.id)
+
     try:
-        result = sync_orchestrator.run_for_scenario(scenario_id)
+        result = sync_orchestrator.run_for_scenario(scenario_id, run_id=run_id)
     except AicoSyncError as exc:
-        logger.exception("AICO sync failed for scenario %s: %s", scenario_id, exc)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+        logger.exception("AICO sync failed (run_id=%s, scenario_id=%s): %s", run_id, scenario_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"[run_id={run_id}] {exc}",
+        ) from exc
+    except Exception as exc:
+        logger.exception("AICO sync crashed (run_id=%s, scenario_id=%s): %s", run_id, scenario_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"[run_id={run_id}] Unexpected error during sync.",
+        ) from exc
 
     return ScenarioSyncResult(
         scenarioId=result.scenario_id,
         items=result.items,
         status=result.status,
-        message=result.message,
+        message=f"[run_id={run_id}] {result.message}",
     )

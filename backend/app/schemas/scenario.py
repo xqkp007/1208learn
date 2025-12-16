@@ -14,6 +14,7 @@ class ScenarioBase(BaseModel):
     aico_user_id: int
     aico_project_name: str
     aico_kb_name: str
+    aico_host: Optional[str] = Field(default=None, description="Bind this scenario config to a specific AICO_HOST")
     sync_schedule: str = Field(default="0 2 * * *", description="Cron expression in Unix format")
 
 
@@ -28,6 +29,7 @@ class ScenarioUpdate(BaseModel):
     aico_user_id: Optional[int] = None
     aico_project_name: Optional[str] = None
     aico_kb_name: Optional[str] = None
+    aico_host: Optional[str] = None
     sync_schedule: Optional[str] = None
 
 
@@ -42,6 +44,7 @@ class ScenarioOut(BaseModel):
     aico_user_id: int
     aico_project_name: str
     aico_kb_name: str
+    aico_host: Optional[str] = None
     aico_cached_pid: Optional[int] = None
     aico_cached_kb_id: Optional[int] = None
     aico_cached_token: Optional[str] = None

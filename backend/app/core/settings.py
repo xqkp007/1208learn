@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import parse_qsl, urlparse
 
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from sqlalchemy.engine import URL
 
@@ -18,7 +17,7 @@ ENV_FILE = BASE_DIR / ".env"
 def _load_nonstandard_env_file(path: Path) -> None:
     """
     The existing .env file uses `key: value` pairs instead of `key=value`.
-    This helper normalizes those entries so python-dotenv and os.environ can consume them.
+    This helper normalizes those entries so os.environ can consume them.
     """
     if not path.exists():
         return
@@ -29,23 +28,56 @@ def _load_nonstandard_env_file(path: Path) -> None:
             continue
         if ":" in line:
             key, value = line.split(":", 1)
-            key = key.strip()
-            value = value.strip()
-            if key and value:
-                if key not in os.environ:
-                    os.environ[key] = value
-                key_upper = key.upper()
-                if key_upper not in os.environ:
-                    os.environ[key_upper] = value
+        elif "=" in line:
+            key, value = line.split("=", 1)
+        else:
             continue
-        if "=" in line:
-            # python-dotenv will process it.
+
+        key = key.strip()
+        value = value.strip()
+        if not key or not value:
             continue
+
+        if key not in os.environ:
+            os.environ[key] = value
+        key_upper = key.upper()
+        if key_upper not in os.environ:
+            os.environ[key_upper] = value
 
 
 if ENV_FILE.exists():
     _load_nonstandard_env_file(ENV_FILE)
-    load_dotenv(ENV_FILE)
+
+
+def _infer_profile_prefix_from_aico_host() -> str:
+    """
+    Allow switching between environments by changing only AICO_HOST.
+
+    - If AICO_ENV is provided, it wins (e.g. 'TEST'/'PROD').
+    - Otherwise, compare AICO_HOST against AICO_HOST_TEST / AICO_HOST_PROD.
+
+    Returned value is '' or a prefix like 'TEST_' / 'PROD_'.
+    """
+    explicit = _get_env_value("AICO_ENV", "AICO_PROFILE", default="")
+    if explicit:
+        normalized = explicit.strip().upper()
+        if not normalized.endswith("_"):
+            normalized += "_"
+        return normalized
+
+    host = _get_env_value("AICO_HOST", default="")
+    if not host:
+        return ""
+
+    host_test = _get_env_value("AICO_HOST_TEST", default="")
+    if host_test and host == host_test:
+        return "TEST_"
+
+    host_prod = _get_env_value("AICO_HOST_PROD", default="")
+    if host_prod and host == host_prod:
+        return "PROD_"
+
+    return ""
 
 
 def _get_env_value(*keys: str, default: Optional[str] = None) -> Optional[str]:
@@ -178,6 +210,18 @@ class AicoSettings(BaseModel):
     project_port: int = Field(default=int(_get_env_value("AICO_PROJECT_PORT", default="39810")))
     kb_port: int = Field(default=int(_get_env_value("AICO_KB_PORT", default="11105")))
     timeout_seconds: float = Field(default=float(_get_env_value("AICO_TIMEOUT", default="10")))
+    file_delete_endpoint: str = Field(
+        default=_get_env_value(
+            "AICO_FILE_DELETE_ENDPOINT",
+            default="/aicoapi/knowledge_manage/file/del",
+        )
+    )
+    file_delete_path_template: str = Field(
+        default=_get_env_value(
+            "AICO_FILE_DELETE_PATH_TEMPLATE",
+            default="/aicoapi/knowledge_manage/file/{file_id}",
+        )
+    )
     chatbot_url: str = Field(
         default=_get_env_value(
             "AICO_CHATBOT_URL",
@@ -214,7 +258,10 @@ class Settings(BaseModel):
 
 @lru_cache
 def get_settings() -> Settings:
-    default_url = _resolve_database_url()
+    profile_prefix = _infer_profile_prefix_from_aico_host()
+    base_url = _resolve_database_url()
+    # When profile is set, prefer profile-level URL keys like TEST_URL / PROD_URL.
+    default_url = _resolve_database_url(profile_prefix, fallback=base_url) if profile_prefix else base_url
     scheduler = SchedulerSettings(
         cron_expression=_get_env_value("ETL_CRON", default="0 1 * * *"),
         faq_cron_expression=_get_env_value("FAQ_CRON", default="0 3 * * *"),
@@ -223,7 +270,7 @@ def get_settings() -> Settings:
         faq_max_workers=int(_get_env_value("FAQ_MAX_WORKERS", default="5")),
     )
     database = DatabaseSettings(
-        source_url=_resolve_database_url("SRC_", fallback=default_url),
-        target_url=_resolve_database_url("DST_", fallback=default_url),
+        source_url=_resolve_database_url(f"{profile_prefix}SRC_", fallback=default_url) if profile_prefix else _resolve_database_url("SRC_", fallback=default_url),
+        target_url=_resolve_database_url(f"{profile_prefix}DST_", fallback=default_url) if profile_prefix else _resolve_database_url("DST_", fallback=default_url),
     )
     return Settings(database=database, scheduler=scheduler)

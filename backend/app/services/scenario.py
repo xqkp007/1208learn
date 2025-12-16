@@ -30,6 +30,7 @@ class ScenarioService:
         aico_user_id: int,
         aico_project_name: str,
         aico_kb_name: str,
+        aico_host: str | None = None,
         sync_schedule: str,
         source_group_code: str | None = None,
     ) -> Scenario:
@@ -42,6 +43,7 @@ class ScenarioService:
                 aico_user_id=aico_user_id,
                 aico_project_name=aico_project_name,
                 aico_kb_name=aico_kb_name,
+                aico_host=aico_host,
                 source_group_code=source_group_code,
                 sync_schedule=sync_schedule,
             )

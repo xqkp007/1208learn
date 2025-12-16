@@ -170,11 +170,17 @@ export const KnowledgeManagementPage: React.FC = () => {
           const { data } = await apiClient.post<ScenarioSyncResult>(
             `/api/v1.3/scenarios/${user.scenarioId}/trigger-sync`,
             undefined,
-            { timeout: 5 * 60 * 1000 },
+            { timeout: 15 * 60 * 1000 },
           );
-          message.success(data?.message || '同步已完成');
+          void data;
+          message.success('同步成功');
         } catch (error: any) {
-          message.error(error?.response?.data?.detail || '同步失败，请稍后重试');
+          const timeoutHint =
+            error?.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
+          const detail = error?.response?.data?.detail;
+          message.error(
+            timeoutHint ? '同步请求超时（15分钟）。' : detail || '同步失败，请稍后重试',
+          );
         } finally {
           setSyncing(false);
         }

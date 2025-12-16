@@ -1,0 +1,196 @@
+INFO:     Will watch for changes in these directories: ['/Users/yunshu/Documents/1208learn']
+INFO:     Uvicorn running on http://0.0.0.0:8011 (Press CTRL+C to quit)
+INFO:     Started reloader process [72958] using WatchFiles
+2025-12-16 15:07:26,548 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-12-16 15:07:26,548 [INFO] apscheduler.scheduler - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+INFO:     Started server process [72981]
+INFO:     Waiting for application startup.
+2025-12-16 15:07:26,560 [INFO] backend.app.jobs.scheduler - Starting scheduler with ETL cron 0 1 * * * and FAQ cron 0 3 * * * (Asia/Shanghai)
+2025-12-16 15:07:26,561 [INFO] apscheduler.scheduler - Added job "SchedulerManager._run_daily_etl" to job store "default"
+2025-12-16 15:07:26,562 [INFO] apscheduler.scheduler - Added job "SchedulerManager._run_daily_faq_extraction" to job store "default"
+2025-12-16 15:07:26,562 [INFO] apscheduler.scheduler - Scheduler started
+INFO:     Application startup complete.
+INFO:     127.0.0.1:60720 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60721 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60722 - "GET /api/v1.4.1/knowledge-items?status=disabled&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60726 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60720 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60721 - "GET /api/v1.4.1/knowledge-items?status=disabled&page=1&pageSize=1 HTTP/1.1" 200 OK
+2025-12-16 15:07:38,956 [INFO] backend.app.api.v1_3.scenario_routes - AICO sync requested (run_id=86f42b56, scenario_id=1, user_id=1)
+2025-12-16 15:07:38,956 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Sync start (scenario_id=1)
+2025-12-16 15:07:39,223 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Loaded 3 active knowledge items (scenario_code=shuiwu)
+2025-12-16 15:07:39,224 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Using AICO config from scenario_id=3 (scenario_code=shuiwu_test aico_host=20.17.127.8)
+2025-12-16 15:07:39,225 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Resolved AICO context: pid=1777 kb_id=2412
+2025-12-16 15:07:39,225 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: cleanup old files ...
+2025-12-16 15:07:39,345 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:07:39,346 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] AICO file/show returned 0 files (title=<empty>)
+2025-12-16 15:07:39,347 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] No previous sync files to delete (scenario=shuiwu, kb_id=2412)
+2025-12-16 15:07:39,347 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: cleanup old files done (121ms)
+2025-12-16 15:07:39,347 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Built CSV: shuiwu_knowledge_20251216150739.csv (1541 bytes)
+2025-12-16 15:07:39,348 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: upload file ...
+2025-12-16 15:07:39,413 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/upload "HTTP/1.1 200 OK"
+2025-12-16 15:07:39,414 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Upload accepted by AICO, waiting for file to appear: shuiwu_knowledge_20251216150739.csv
+2025-12-16 15:07:39,505 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:07:39,506 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Waiting for file to appear in list... elapsed=0s
+2025-12-16 15:07:41,614 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:07:41,616 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] File appeared in AICO list (file_id=32513)
+2025-12-16 15:07:41,616 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: upload file done (file_id=32513, 2268ms)
+2025-12-16 15:07:41,616 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: wait split complete ...
+2025-12-16 15:07:41,764 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:07:41,765 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Split status polling: status=1 elapsed=0s
+2025-12-16 15:07:43,856 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:07:43,864 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Split status polling: status=3 elapsed=2s
+2025-12-16 15:07:43,864 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: wait split complete done (2247ms)
+2025-12-16 15:07:43,864 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: online all ...
+2025-12-16 15:07:43,873 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Calling AICO online (kb_id=2412 pid=1777)
+2025-12-16 15:07:43,972 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/knowledge/online "HTTP/1.1 200 OK"
+2025-12-16 15:07:43,978 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Step: online all done (114ms)
+2025-12-16 15:07:43,979 [INFO] backend.app.services.aico_sync - [run_id=86f42b56] Sync success (3 items, 5022ms)
+INFO:     127.0.0.1:60727 - "POST /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60841 - "OPTIONS /api/v1.4.1/knowledge-items/9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60841 - "GET /api/v1.4.1/knowledge-items/9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60841 - "OPTIONS /api/v1.4.1/knowledge-items/9 HTTP/1.1" 200 OK
+2025-12-16 15:08:21,185 [INFO] backend.app.services.knowledge - Updated knowledge item 9
+INFO:     127.0.0.1:60841 - "PUT /api/v1.4.1/knowledge-items/9 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60841 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60844 - "GET /api/v1.4.1/knowledge-items?status=disabled&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60841 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=1 HTTP/1.1" 200 OK
+2025-12-16 15:08:31,748 [INFO] backend.app.api.v1_3.scenario_routes - AICO sync requested (run_id=63964448, scenario_id=1, user_id=1)
+2025-12-16 15:08:31,748 [INFO] backend.app.services.aico_sync - [run_id=63964448] Sync start (scenario_id=1)
+2025-12-16 15:08:31,947 [INFO] backend.app.services.aico_sync - [run_id=63964448] Loaded 3 active knowledge items (scenario_code=shuiwu)
+2025-12-16 15:08:31,947 [INFO] backend.app.services.aico_sync - [run_id=63964448] Using AICO config from scenario_id=3 (scenario_code=shuiwu_test aico_host=20.17.127.8)
+2025-12-16 15:08:31,948 [INFO] backend.app.services.aico_sync - [run_id=63964448] Resolved AICO context: pid=1777 kb_id=2412
+2025-12-16 15:08:31,948 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: cleanup old files ...
+2025-12-16 15:08:32,034 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:32,035 [INFO] backend.app.services.aico_sync - [run_id=63964448] AICO file/show returned 1 files (title=<empty>)
+2025-12-16 15:08:32,036 [INFO] backend.app.services.aico_sync - [run_id=63964448] Deleting 1 previous sync files (scenario=shuiwu, kb_id=2412)
+2025-12-16 15:08:32,043 [INFO] backend.app.services.aico_sync - [run_id=63964448] Deleting files via /aicoapi/knowledge_manage/file/del (count=1, pid=1777, kb_id=2412)
+2025-12-16 15:08:32,131 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/del "HTTP/1.1 200 OK"
+2025-12-16 15:08:32,132 [INFO] backend.app.services.aico_sync - [run_id=63964448] Delete files response: {'total': None, 'type': 'info', 'error': None, 'message': '删除成功', 'data': '', 'start_time': 1765868912192, 'end_time': 1765868912192, 'err_code': 0, 'page_index': None, 'page_size': None}
+2025-12-16 15:08:32,135 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: cleanup old files done (186ms)
+2025-12-16 15:08:32,135 [INFO] backend.app.services.aico_sync - [run_id=63964448] Built CSV: shuiwu_knowledge_20251216150832.csv (1034 bytes)
+2025-12-16 15:08:32,135 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: upload file ...
+2025-12-16 15:08:32,221 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/upload "HTTP/1.1 200 OK"
+2025-12-16 15:08:32,221 [INFO] backend.app.services.aico_sync - [run_id=63964448] Upload accepted by AICO, waiting for file to appear: shuiwu_knowledge_20251216150832.csv
+2025-12-16 15:08:32,326 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:32,327 [INFO] backend.app.services.aico_sync - [run_id=63964448] File appeared in AICO list (file_id=32515)
+2025-12-16 15:08:32,327 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: upload file done (file_id=32515, 191ms)
+2025-12-16 15:08:32,327 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: wait split complete ...
+2025-12-16 15:08:32,414 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:32,415 [INFO] backend.app.services.aico_sync - [run_id=63964448] Split status polling: status=1 elapsed=0s
+2025-12-16 15:08:34,518 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:36,608 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:36,609 [INFO] backend.app.services.aico_sync - [run_id=63964448] Split status polling: status=3 elapsed=4s
+2025-12-16 15:08:36,609 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: wait split complete done (4281ms)
+2025-12-16 15:08:36,609 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: online all ...
+2025-12-16 15:08:36,615 [INFO] backend.app.services.aico_sync - [run_id=63964448] Calling AICO online (kb_id=2412 pid=1777)
+2025-12-16 15:08:36,758 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/knowledge/online "HTTP/1.1 200 OK"
+2025-12-16 15:08:36,759 [INFO] backend.app.services.aico_sync - [run_id=63964448] Step: online all done (149ms)
+2025-12-16 15:08:36,759 [INFO] backend.app.services.aico_sync - [run_id=63964448] Sync success (3 items, 5010ms)
+INFO:     127.0.0.1:60851 - "POST /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
+2025-12-16 15:08:45,955 [INFO] backend.app.api.v1_3.scenario_routes - AICO sync requested (run_id=e9a6994b, scenario_id=1, user_id=1)
+2025-12-16 15:08:45,955 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Sync start (scenario_id=1)
+2025-12-16 15:08:46,173 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Loaded 3 active knowledge items (scenario_code=shuiwu)
+2025-12-16 15:08:46,174 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Using AICO config from scenario_id=3 (scenario_code=shuiwu_test aico_host=20.17.127.8)
+2025-12-16 15:08:46,174 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Resolved AICO context: pid=1777 kb_id=2412
+2025-12-16 15:08:46,174 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: cleanup old files ...
+2025-12-16 15:08:46,288 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:46,289 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] AICO file/show returned 1 files (title=<empty>)
+2025-12-16 15:08:46,290 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Deleting 1 previous sync files (scenario=shuiwu, kb_id=2412)
+2025-12-16 15:08:46,298 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Deleting files via /aicoapi/knowledge_manage/file/del (count=1, pid=1777, kb_id=2412)
+2025-12-16 15:08:46,449 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/del "HTTP/1.1 200 OK"
+2025-12-16 15:08:46,449 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Delete files response: {'total': None, 'type': 'info', 'error': None, 'message': '删除成功', 'data': '', 'start_time': 1765868926502, 'end_time': 1765868926502, 'err_code': 0, 'page_index': None, 'page_size': None}
+2025-12-16 15:08:46,450 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: cleanup old files done (275ms)
+2025-12-16 15:08:46,450 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Built CSV: shuiwu_knowledge_20251216150846.csv (1034 bytes)
+2025-12-16 15:08:46,450 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: upload file ...
+2025-12-16 15:08:46,556 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/upload "HTTP/1.1 200 OK"
+2025-12-16 15:08:46,556 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Upload accepted by AICO, waiting for file to appear: shuiwu_knowledge_20251216150846.csv
+2025-12-16 15:08:46,666 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:46,673 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] File appeared in AICO list (file_id=32516)
+2025-12-16 15:08:46,673 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: upload file done (file_id=32516, 223ms)
+2025-12-16 15:08:46,673 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: wait split complete ...
+2025-12-16 15:08:46,771 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:46,771 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Split status polling: status=1 elapsed=0s
+2025-12-16 15:08:48,871 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:51,037 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:51,038 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Split status polling: status=3 elapsed=4s
+2025-12-16 15:08:51,039 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: wait split complete done (4366ms)
+2025-12-16 15:08:51,039 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: online all ...
+2025-12-16 15:08:51,050 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Calling AICO online (kb_id=2412 pid=1777)
+2025-12-16 15:08:51,129 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/knowledge/online "HTTP/1.1 200 OK"
+2025-12-16 15:08:51,130 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Step: online all done (91ms)
+2025-12-16 15:08:51,131 [INFO] backend.app.services.aico_sync - [run_id=e9a6994b] Sync success (3 items, 5175ms)
+INFO:     127.0.0.1:60871 - "POST /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
+2025-12-16 15:08:59,108 [INFO] backend.app.api.v1_3.scenario_routes - AICO sync requested (run_id=512b0032, scenario_id=1, user_id=1)
+2025-12-16 15:08:59,108 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Sync start (scenario_id=1)
+2025-12-16 15:08:59,350 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Loaded 3 active knowledge items (scenario_code=shuiwu)
+2025-12-16 15:08:59,351 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Using AICO config from scenario_id=3 (scenario_code=shuiwu_test aico_host=20.17.127.8)
+2025-12-16 15:08:59,351 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Resolved AICO context: pid=1777 kb_id=2412
+2025-12-16 15:08:59,351 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: cleanup old files ...
+2025-12-16 15:08:59,449 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:59,450 [INFO] backend.app.services.aico_sync - [run_id=512b0032] AICO file/show returned 1 files (title=<empty>)
+2025-12-16 15:08:59,450 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Deleting 1 previous sync files (scenario=shuiwu, kb_id=2412)
+2025-12-16 15:08:59,458 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Deleting files via /aicoapi/knowledge_manage/file/del (count=1, pid=1777, kb_id=2412)
+2025-12-16 15:08:59,569 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/del "HTTP/1.1 200 OK"
+2025-12-16 15:08:59,570 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Delete files response: {'total': None, 'type': 'info', 'error': None, 'message': '删除成功', 'data': '', 'start_time': 1765868939622, 'end_time': 1765868939622, 'err_code': 0, 'page_index': None, 'page_size': None}
+2025-12-16 15:08:59,570 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: cleanup old files done (219ms)
+2025-12-16 15:08:59,570 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Built CSV: shuiwu_knowledge_20251216150859.csv (1034 bytes)
+2025-12-16 15:08:59,570 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: upload file ...
+2025-12-16 15:08:59,646 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/upload "HTTP/1.1 200 OK"
+2025-12-16 15:08:59,647 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Upload accepted by AICO, waiting for file to appear: shuiwu_knowledge_20251216150859.csv
+2025-12-16 15:08:59,726 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:59,726 [INFO] backend.app.services.aico_sync - [run_id=512b0032] File appeared in AICO list (file_id=32517)
+2025-12-16 15:08:59,726 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: upload file done (file_id=32517, 155ms)
+2025-12-16 15:08:59,726 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: wait split complete ...
+2025-12-16 15:08:59,807 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:08:59,807 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Split status polling: status=1 elapsed=0s
+2025-12-16 15:09:01,899 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:09:03,978 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:09:03,980 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Split status polling: status=3 elapsed=4s
+2025-12-16 15:09:03,982 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: wait split complete done (4255ms)
+2025-12-16 15:09:03,982 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: online all ...
+2025-12-16 15:09:03,990 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Calling AICO online (kb_id=2412 pid=1777)
+2025-12-16 15:09:04,078 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/knowledge/online "HTTP/1.1 200 OK"
+2025-12-16 15:09:04,079 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Step: online all done (97ms)
+2025-12-16 15:09:04,079 [INFO] backend.app.services.aico_sync - [run_id=512b0032] Sync success (3 items, 4971ms)
+INFO:     127.0.0.1:60890 - "POST /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60949 - "OPTIONS /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60950 - "OPTIONS /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60951 - "OPTIONS /api/v1.4.1/knowledge-items?status=disabled&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60951 - "GET /api/v1.4.1/knowledge-items?status=disabled&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60950 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60949 - "GET /api/v1.4.1/knowledge-items?status=active&page=1&pageSize=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60987 - "OPTIONS /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
+2025-12-16 15:10:33,824 [INFO] backend.app.api.v1_3.scenario_routes - AICO sync requested (run_id=92245945, scenario_id=1, user_id=1)
+2025-12-16 15:10:33,824 [INFO] backend.app.services.aico_sync - [run_id=92245945] Sync start (scenario_id=1)
+2025-12-16 15:10:34,068 [INFO] backend.app.services.aico_sync - [run_id=92245945] Loaded 3 active knowledge items (scenario_code=shuiwu)
+2025-12-16 15:10:34,068 [INFO] backend.app.services.aico_sync - [run_id=92245945] Using AICO config from scenario_id=3 (scenario_code=shuiwu_test aico_host=20.17.127.8)
+2025-12-16 15:10:34,068 [INFO] backend.app.services.aico_sync - [run_id=92245945] Resolved AICO context: pid=1777 kb_id=2412
+2025-12-16 15:10:34,069 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: cleanup old files ...
+2025-12-16 15:10:34,146 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:10:34,147 [INFO] backend.app.services.aico_sync - [run_id=92245945] AICO file/show returned 1 files (title=<empty>)
+2025-12-16 15:10:34,148 [INFO] backend.app.services.aico_sync - [run_id=92245945] Deleting 1 previous sync files (scenario=shuiwu, kb_id=2412)
+2025-12-16 15:10:34,158 [INFO] backend.app.services.aico_sync - [run_id=92245945] Deleting files via /aicoapi/knowledge_manage/file/del (count=1, pid=1777, kb_id=2412)
+2025-12-16 15:10:34,241 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/del "HTTP/1.1 200 OK"
+2025-12-16 15:10:34,242 [INFO] backend.app.services.aico_sync - [run_id=92245945] Delete files response: {'total': None, 'type': 'info', 'error': None, 'message': '删除成功', 'data': '', 'start_time': 1765869034299, 'end_time': 1765869034299, 'err_code': 0, 'page_index': None, 'page_size': None}
+2025-12-16 15:10:34,242 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: cleanup old files done (173ms)
+2025-12-16 15:10:34,242 [INFO] backend.app.services.aico_sync - [run_id=92245945] Built CSV: shuiwu_knowledge_20251216151034.csv (1034 bytes)
+2025-12-16 15:10:34,242 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: upload file ...
+2025-12-16 15:10:34,295 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/upload "HTTP/1.1 200 OK"
+2025-12-16 15:10:34,296 [INFO] backend.app.services.aico_sync - [run_id=92245945] Upload accepted by AICO, waiting for file to appear: shuiwu_knowledge_20251216151034.csv
+2025-12-16 15:10:34,395 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:10:34,395 [INFO] backend.app.services.aico_sync - [run_id=92245945] File appeared in AICO list (file_id=32520)
+2025-12-16 15:10:34,395 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: upload file done (file_id=32520, 153ms)
+2025-12-16 15:10:34,395 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: wait split complete ...
+2025-12-16 15:10:34,477 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:10:34,478 [INFO] backend.app.services.aico_sync - [run_id=92245945] Split status polling: status=1 elapsed=0s
+2025-12-16 15:10:36,557 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:10:38,647 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/file/show "HTTP/1.1 200 OK"
+2025-12-16 15:10:38,647 [INFO] backend.app.services.aico_sync - [run_id=92245945] Split status polling: status=3 elapsed=4s
+2025-12-16 15:10:38,648 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: wait split complete done (4252ms)
+2025-12-16 15:10:38,648 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: online all ...
+2025-12-16 15:10:38,657 [INFO] backend.app.services.aico_sync - [run_id=92245945] Calling AICO online (kb_id=2412 pid=1777)
+2025-12-16 15:10:38,748 [INFO] httpx - HTTP Request: POST http://20.17.127.8:11105/aicoapi/knowledge_manage/knowledge/online "HTTP/1.1 200 OK"
+2025-12-16 15:10:38,749 [INFO] backend.app.services.aico_sync - [run_id=92245945] Step: online all done (100ms)
+2025-12-16 15:10:38,749 [INFO] backend.app.services.aico_sync - [run_id=92245945] Sync success (3 items, 4924ms)
+INFO:     127.0.0.1:60987 - "POST /api/v1.3/scenarios/1/trigger-sync HTTP/1.1" 200 OK
