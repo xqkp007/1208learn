@@ -3,6 +3,7 @@ import { Layout, Menu, Typography, Button } from 'antd';
 import {
   CheckCircleOutlined,
   DatabaseOutlined,
+  BookOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
@@ -11,6 +12,8 @@ import { LoginPage } from '@/pages/LoginPage';
 import { ReviewWorkbenchPage } from '@/pages/ReviewWorkbenchPage';
 import { KnowledgeManagementPage } from '@/pages/KnowledgeManagementPage';
 import { InternalTasksPage } from '@/pages/InternalTasksPage';
+import { TaxonomyKBPage } from '@/pages/TaxonomyKBPage';
+import { TaxonomyReviewWorkbenchPage } from '@/pages/TaxonomyReviewWorkbenchPage';
 
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
@@ -31,14 +34,38 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   const menuItems = [
     {
-      key: '/review',
-      icon: <CheckCircleOutlined />,
-      label: '审核工作台',
+      key: 'group-qa',
+      type: 'group' as const,
+      label: 'QA审核模块',
+      children: [
+        {
+          key: '/review',
+          icon: <CheckCircleOutlined />,
+          label: '审核工作台',
+        },
+        {
+          key: '/knowledge',
+          icon: <DatabaseOutlined />,
+          label: 'QA知识库管理',
+        },
+      ],
     },
     {
-      key: '/knowledge',
-      icon: <DatabaseOutlined />,
-      label: '知识库管理',
+      key: 'group-taxonomy',
+      type: 'group' as const,
+      label: '分类知识库模块',
+      children: [
+        {
+          key: '/taxonomy-review',
+          icon: <CheckCircleOutlined />,
+          label: '审核工作台',
+        },
+        {
+          key: '/taxonomy',
+          icon: <BookOutlined />,
+          label: '三级分类知识库',
+        },
+      ],
     },
   ];
 
@@ -137,6 +164,22 @@ const App: React.FC = () => (
         }
       />
       <Route
+        path="/taxonomy-review"
+        element={
+          <RequireAuth>
+            <TaxonomyReviewWorkbenchPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/taxonomy"
+        element={
+          <RequireAuth>
+            <TaxonomyKBPage />
+          </RequireAuth>
+        }
+      />
+      <Route
         path="/knowledge"
         element={
           <RequireAuth>
@@ -152,7 +195,7 @@ const App: React.FC = () => (
           </RequireAuth>
         }
       />
-      <Route path="*" element={<Navigate to="/review" replace />} />
+      <Route path="*" element={<Navigate to="/taxonomy" replace />} />
     </Routes>
   </AppShell>
 );

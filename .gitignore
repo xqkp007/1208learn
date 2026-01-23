@@ -13,4 +13,5 @@ build/
 .venv/
 venv/
 __pycache__/
+.pycache/
 *.pyc

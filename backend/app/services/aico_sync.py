@@ -11,6 +11,7 @@ from typing import Optional
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from ..core.db import TargetSessionLocal
 from ..core.logging import get_logger
@@ -70,47 +71,7 @@ class AicoSyncOrchestrator:
                 .all()
             )
 
-            # Keep knowledge items bound to the user's scenario_id, but allow AICO config
-            # switching based on current AICO_HOST. Since scenario_code is unique, the common
-            # pattern is to store test configs as "<scenario_code>_test" rows.
-            aico_scenario = scenario
-            current_host = str(self.aico_settings.host or "").strip()
-            host_test = str(os.getenv("AICO_HOST_TEST", "") or "").strip()
-            host_prod = str(os.getenv("AICO_HOST_PROD", "") or "").strip()
-            test_suffix = str(os.getenv("AICO_TEST_SCENARIO_SUFFIX", "_test") or "_test").strip() or "_test"
-
-            base_code = scenario.scenario_code
-            root_code = base_code[:-len(test_suffix)] if base_code.endswith(test_suffix) else base_code
-
-            preferred_codes: list[str]
-            if host_test and current_host == host_test:
-                preferred_codes = [f"{root_code}{test_suffix}", root_code]
-            elif host_prod and current_host == host_prod:
-                preferred_codes = [root_code, f"{root_code}{test_suffix}"]
-            else:
-                preferred_codes = [base_code, f"{root_code}{test_suffix}", root_code]
-
-            candidates = (
-                session.execute(
-                    select(Scenario).where(
-                        Scenario.scenario_code.in_(preferred_codes),
-                        Scenario.is_active.is_(True),
-                    )
-                )
-                .scalars()
-                .all()
-            )
-            if candidates:
-                by_code_rank = {code: i for i, code in enumerate(preferred_codes)}
-                def _rank(s: Scenario) -> int:
-                    return by_code_rank.get(s.scenario_code, 9999)
-
-                # Prefer exact host binding when present.
-                host_matched = [
-                    s for s in candidates if str(getattr(s, "aico_host", "") or "").strip() == current_host
-                ]
-                picked = min(host_matched, key=_rank) if host_matched else min(candidates, key=_rank)
-                aico_scenario = picked
+            aico_scenario = self._select_aico_scenario(session, scenario)
 
             # detach from session to avoid accidental lazy-load after close
             session.expunge(scenario)
@@ -119,20 +80,44 @@ class AicoSyncOrchestrator:
             for item in items:
                 session.expunge(item)
 
-        if not items:
+        result = self.run_for_items(
+            scenario=scenario,
+            aico_scenario=aico_scenario,
+            items=items,
+            run_id=run_id,
+            allow_empty=False,
+            source_label="knowledge items",
+            skip_message="No active knowledge items to sync.",
+        )
+        return result
+
+    def run_for_items(
+        self,
+        *,
+        scenario: Scenario,
+        aico_scenario: Scenario,
+        items: list[object],
+        run_id: str,
+        allow_empty: bool,
+        source_label: str,
+        skip_message: str,
+    ) -> SyncRunResult:
+        started_at = time.monotonic()
+        if not items and not allow_empty:
             elapsed_ms = int((time.monotonic() - started_at) * 1000)
             logger.info("[run_id=%s] Sync skipped: no items (%dms)", run_id, elapsed_ms)
             return SyncRunResult(
-                scenario_id=scenario_id,
+                scenario_id=scenario.id,
                 items=0,
                 status="skipped",
-                message="No active knowledge items to sync.",
+                message=skip_message,
             )
 
         logger.info(
-            "[run_id=%s] Loaded %d active knowledge items (scenario_code=%s)",
+            "[run_id=%s] Loaded %d %s (scenario_code=%s)",
             run_id,
             len(items),
+            source_label,
             scenario.scenario_code,
         )
         if aico_scenario.id != scenario.id:
@@ -165,6 +150,20 @@ class AicoSyncOrchestrator:
             run_id,
             int((time.monotonic() - step_started) * 1000),
         )
+
+        if not items:
+            elapsed_ms = int((time.monotonic() - started_at) * 1000)
+            logger.info(
+                "[run_id=%s] Sync complete: no items to upload (%dms)",
+                run_id,
+                elapsed_ms,
+            )
+            return SyncRunResult(
+                scenario_id=scenario.id,
+                items=0,
+                status="success",
+                message=f"{skip_message} Cleared previous sync files.",
+            )
 
         file_name, file_bytes = self._build_csv_file(scenario, items)
         logger.info("[run_id=%s] Built CSV: %s (%d bytes)", run_id, file_name, len(file_bytes))
@@ -200,11 +199,57 @@ class AicoSyncOrchestrator:
         elapsed_ms = int((time.monotonic() - started_at) * 1000)
         logger.info("[run_id=%s] Sync success (%d items, %dms)", run_id, len(items), elapsed_ms)
         return SyncRunResult(
-            scenario_id=scenario_id,
+            scenario_id=scenario.id,
             items=len(items),
             status="success",
-            message=f"Synced {len(items)} knowledge items to AICO.",
+            message=f"Synced {len(items)} items to AICO.",
         )
+
+    def _select_aico_scenario(self, session: Session, scenario: Scenario) -> Scenario:
+        # Keep knowledge items bound to the user's scenario_id, but allow AICO config
+        # switching based on current AICO_HOST. Since scenario_code is unique, the common
+        # pattern is to store test configs as "<scenario_code>_test" rows.
+        aico_scenario = scenario
+        current_host = str(self.aico_settings.host or "").strip()
+        host_test = str(os.getenv("AICO_HOST_TEST", "") or "").strip()
+        host_prod = str(os.getenv("AICO_HOST_PROD", "") or "").strip()
+        test_suffix = str(os.getenv("AICO_TEST_SCENARIO_SUFFIX", "_test") or "_test").strip() or "_test"
+
+        base_code = scenario.scenario_code
+        root_code = base_code[:-len(test_suffix)] if base_code.endswith(test_suffix) else base_code
+
+        preferred_codes: list[str]
+        if host_test and current_host == host_test:
+            preferred_codes = [f"{root_code}{test_suffix}", root_code]
+        elif host_prod and current_host == host_prod:
+            preferred_codes = [root_code, f"{root_code}{test_suffix}"]
+        else:
+            preferred_codes = [base_code, f"{root_code}{test_suffix}", root_code]
+
+        candidates = (
+            session.execute(
+                select(Scenario).where(
+                    Scenario.scenario_code.in_(preferred_codes),
+                    Scenario.is_active.is_(True),
+                )
+            )
+            .scalars()
+            .all()
+        )
+        if candidates:
+            by_code_rank = {code: i for i, code in enumerate(preferred_codes)}
+
+            def _rank(s: Scenario) -> int:
+                return by_code_rank.get(s.scenario_code, 9999)
+
+            # Prefer exact host binding when present.
+            host_matched = [
+                s for s in candidates if str(getattr(s, "aico_host", "") or "").strip() == current_host
+            ]
+            picked = min(host_matched, key=_rank) if host_matched else min(candidates, key=_rank)
+            aico_scenario = picked
+
+        return aico_scenario
 
     @staticmethod
     def _build_split_config(pid: int, kb_id: int) -> str:
@@ -224,7 +269,7 @@ class AicoSyncOrchestrator:
         }
         return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
-    def _build_csv_file(self, scenario: Scenario, items: list[KnowledgeItem]) -> tuple[str, bytes]:
+    def _build_csv_file(self, scenario: Scenario, items: list[object]) -> tuple[str, bytes]:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         file_name = f"{scenario.scenario_code}_knowledge_{timestamp}.csv"
 

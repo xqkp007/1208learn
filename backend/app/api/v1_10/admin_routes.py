@@ -12,6 +12,7 @@ from ...core.logging import get_logger
 from ...core.security import get_current_user
 from ...core.settings import get_settings
 from ...models.user import User
+from ...services.compare_kb_sync import CompareKbSyncService
 from ...services.dialog_etl import DialogETLService
 from ...services.faq_extraction import FAQExtractionService
 
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api/v1.10/admin", tags=["admin"])
 
 etl_service = DialogETLService()
 faq_service = FAQExtractionService()
+compare_sync_service = CompareKbSyncService()
 
 
 class TriggerAggregationRequest(BaseModel):
@@ -76,7 +78,14 @@ def _run_aggregation_job(job_id: str, start_time: datetime, end_time: datetime) 
 def _run_extraction_job(job_id: str, limit: Optional[int]) -> None:
     logger.info("Admin extraction job %s started (limit=%s)", job_id, limit)
     faq_service.run(limit=limit)
+    compare_sync_service.run()
     logger.info("Admin extraction job %s completed", job_id)
+
+
+def _run_compare_kb_sync_job(job_id: str) -> None:
+    logger.info("Admin compare KB sync job %s started", job_id)
+    compare_sync_service.run()
+    logger.info("Admin compare KB sync job %s completed", job_id)
 
 
 @router.post(
@@ -131,3 +140,25 @@ def trigger_extraction(
         message="Extraction task triggered.",
     )
 
+
+@router.post(
+    "/trigger-compare-kb-sync",
+    response_model=TriggerJobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def trigger_compare_kb_sync(
+    current_user: User = Depends(get_current_user),
+) -> TriggerJobResponse:
+    _ = current_user  # login-only gate, no RBAC in v1.10
+    job_id = f"compare-sync-{uuid.uuid4().hex}"
+    thread = threading.Thread(
+        target=_run_compare_kb_sync_job,
+        args=(job_id,),
+        daemon=True,
+    )
+    thread.start()
+
+    return TriggerJobResponse(
+        jobId=job_id,
+        message="Compare KB sync task triggered.",
+    )

@@ -18,6 +18,7 @@ export const InternalTasksPage: React.FC = () => {
   });
   const [aggLoading, setAggLoading] = useState(false);
   const [extLoading, setExtLoading] = useState(false);
+  const [compareSyncLoading, setCompareSyncLoading] = useState(false);
   const [limit, setLimit] = useState<number | null>(null);
 
   const startTime = useMemo(() => range[0].startOf('day').toISOString(), [range]);
@@ -53,6 +54,22 @@ export const InternalTasksPage: React.FC = () => {
       message.error(error?.response?.data?.detail || '触发AI提取失败');
     } finally {
       setExtLoading(false);
+    }
+  };
+
+  const triggerCompareKbSync = async () => {
+    setCompareSyncLoading(true);
+    try {
+      const { data } = await apiClient.post<TriggerJobResponse>(
+        '/api/v1.10/admin/trigger-compare-kb-sync',
+        {},
+        { timeout: 30_000 },
+      );
+      message.success(`${data.message} jobId=${data.jobId}`);
+    } catch (error: any) {
+      message.error(error?.response?.data?.detail || '触发审核区知识库同步失败');
+    } finally {
+      setCompareSyncLoading(false);
     }
   };
 
@@ -111,6 +128,21 @@ export const InternalTasksPage: React.FC = () => {
           <div>
             <Button type="primary" loading={extLoading} onClick={triggerExtraction}>
               执行AI提取
+            </Button>
+          </div>
+        </Space>
+      </Card>
+
+      <Divider />
+
+      <Card title="审核区知识库同步" bordered={false}>
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Text type="secondary">
+            仅同步“可见待审核”的Q+A到对比审核知识库（全量覆盖）。
+          </Text>
+          <div>
+            <Button type="primary" loading={compareSyncLoading} onClick={triggerCompareKbSync}>
+              执行同步
             </Button>
           </div>
         </Space>

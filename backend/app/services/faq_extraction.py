@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from typing import Optional, Tuple
 
+import json
+import time
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
@@ -30,6 +33,8 @@ class FAQExtractionResult:
 class FAQExtractionService:
     def __init__(self, max_workers: Optional[int] = None) -> None:
         self.max_workers = max_workers or settings.scheduler.faq_max_workers
+        self.auto_review_max_retries = 2
+        self.auto_review_retry_delay_seconds = 5
 
     def run(self, target_date: Optional[date] = None, limit: Optional[int] = None) -> FAQExtractionResult:
         ids = self._fetch_unprocessed_ids(target_date)
@@ -124,10 +129,11 @@ class FAQExtractionService:
                 session.commit()
                 return False
 
+            pending_status = self._determine_pending_status(question, answer, conv.call_id)
             faq = PendingFAQ(
                 question=question,
                 answer=answer,
-                status="pending",
+                status=pending_status,
                 source_group_code=conv.group_code,
                 source_call_id=conv.call_id,
                 source_conversation_text=conv.full_text,
@@ -139,11 +145,159 @@ class FAQExtractionService:
         logger.info("Created pending FAQ from conversation %s", conv_id)
         return True
 
-    def _call_aico(self, full_text: str) -> str:
+    def _determine_pending_status(self, question: str, answer: str, call_id: str) -> str:
+        try:
+            decision = self._run_auto_review(question, answer)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.warning("Auto review failed for conversation %s: %s", call_id, exc)
+            return "pending"
+
+        if decision != "approved":
+            return "auto_rejected"
+
+        try:
+            compare_decision = self._run_compare_review(question, answer)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.warning("Compare review failed for conversation %s: %s", call_id, exc)
+            return "pending"
+
+        if compare_decision == "approved":
+            return "pending"
+        return "auto_rejected"
+
+    def _run_auto_review(self, question: str, answer: str) -> str:
+        query = self._build_auto_review_query(question, answer)
+        url = settings.aico.auto_review_url or settings.aico.chatbot_url
+        if not url:
+            raise RuntimeError("AICO auto review URL is not configured.")
+
+        for attempt in range(self.auto_review_max_retries + 1):
+            try:
+                reply_text = self._call_aico(query, url=url)
+            except Exception as exc:  # pylint: disable=broad-except
+                if attempt < self.auto_review_max_retries:
+                    logger.warning(
+                        "Auto review attempt %s failed, retrying: %s",
+                        attempt + 1,
+                        exc,
+                    )
+                    time.sleep(self.auto_review_retry_delay_seconds)
+                    continue
+                raise
+
+            decision = reply_text.strip()
+            normalized = decision.lower()
+            if normalized == "approved":
+                return "approved"
+            if normalized == "rejected":
+                return "rejected"
+
+            parsed = self._parse_auto_review_json(decision)
+            if parsed:
+                return parsed
+
+            logger.warning("Auto review returned unexpected text, treating as rejected: %s", reply_text)
+            return "rejected"
+
+        return "rejected"
+
+    def _run_compare_review(self, question: str, answer: str) -> str:
+        query = self._build_auto_review_query(question, answer)
+        url = (
+            settings.aico.compare_review_url
+            or settings.aico.auto_review_url
+            or settings.aico.chatbot_url
+        )
+        if not url:
+            raise RuntimeError("AICO compare review URL is not configured.")
+
+        for attempt in range(self.auto_review_max_retries + 1):
+            try:
+                reply_text = self._call_aico(query, url=url)
+            except Exception as exc:  # pylint: disable=broad-except
+                if attempt < self.auto_review_max_retries:
+                    logger.warning(
+                        "Compare review attempt %s failed, retrying: %s",
+                        attempt + 1,
+                        exc,
+                    )
+                    time.sleep(self.auto_review_retry_delay_seconds)
+                    continue
+                raise
+
+            decision = reply_text.strip()
+            normalized = decision.lower()
+            if normalized == "approved":
+                return "approved"
+            if normalized == "rejected":
+                return "rejected"
+
+            parsed = self._parse_auto_review_json(decision)
+            if parsed:
+                return parsed
+
+            logger.warning("Compare review returned unexpected text, treating as rejected: %s", reply_text)
+            return "rejected"
+
+        return "rejected"
+
+    @staticmethod
+    def _build_auto_review_query(question: str, answer: str) -> str:
+        return f"问题：{question}\n答案：{answer}"
+
+    @staticmethod
+    def _parse_auto_review_json(raw: str) -> Optional[str]:
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+
+        def extract(value: object) -> Optional[str]:
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in ("approved", "rejected"):
+                    return normalized
+            return None
+
+        if isinstance(payload, dict):
+            for key in (
+                "result",
+                "status",
+                "decision",
+                "auto_review",
+                "autoReview",
+                "auto_review_result",
+                "autoReviewResult",
+            ):
+                extracted = extract(payload.get(key))
+                if extracted:
+                    return extracted
+            for value in payload.values():
+                extracted = extract(value)
+                if extracted:
+                    return extracted
+            return None
+
+        if isinstance(payload, list):
+            for item in payload:
+                extracted = extract(item)
+                if extracted:
+                    return extracted
+                if isinstance(item, dict):
+                    for value in item.values():
+                        extracted = extract(value)
+                        if extracted:
+                            return extracted
+
+        return None
+    def _call_aico(self, full_text: str, url: Optional[str] = None) -> str:
         if not settings.aico.chatbot_api_key:
             raise RuntimeError("AICO chatbot API key is not configured.")
 
-        url = settings.aico.chatbot_url
+        target_url = url or settings.aico.chatbot_url
+        if not target_url:
+            raise RuntimeError("AICO chatbot URL is not configured.")
+
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {settings.aico.chatbot_api_key}",
@@ -155,7 +309,7 @@ class FAQExtractionService:
         # trust_env=False 避免受本机 HTTP(S)_PROXY / ALL_PROXY 等环境变量影响，
         # 从而不再要求 socksio 依赖。
         with httpx.Client(timeout=timeout, trust_env=False) as client:
-            response = client.post(url, headers=headers, json=payload)
+            response = client.post(target_url, headers=headers, json=payload)
             response.raise_for_status()
             data = response.json()
 

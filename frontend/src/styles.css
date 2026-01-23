@@ -1101,3 +1101,190 @@ body {
   background: rgba(24, 144, 255, 0.15);
   font-weight: 600;
 }
+
+/* ========================================
+   三级分类树样式优化 - 现代卡片风格
+   ======================================== */
+
+/* 树形容器滚动区域 */
+.tree-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.tree-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.tree-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.custom-taxonomy-tree {
+  font-size: 14px;
+}
+
+.custom-taxonomy-tree .ant-tree-treenode {
+  padding: 2px 0;
+  transition: all 0.2s ease;
+}
+
+.custom-taxonomy-tree .ant-tree-node-content-wrapper {
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  border: 1px solid transparent;
+}
+
+.custom-taxonomy-tree .ant-tree-node-content-wrapper:hover {
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.06) 0%, rgba(24, 144, 255, 0.02) 100%);
+  border-color: rgba(24, 144, 255, 0.15);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.08);
+}
+
+.custom-taxonomy-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.12) 0%, rgba(24, 144, 255, 0.04) 100%);
+  border-color: rgba(24, 144, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+  transform: translateX(0);
+}
+
+.custom-taxonomy-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .node-title {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+/* 自定义节点内容 */
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
+.custom-tree-node .level-badge {
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.custom-tree-node .node-title {
+  flex: 1;
+  font-weight: 450;
+  letter-spacing: 0.3px;
+}
+
+/* 图标样式 - 彩色图标 */
+.custom-taxonomy-tree .ant-tree-iconEle {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-taxonomy-tree .anticon {
+  font-size: 18px;
+  transition: all 0.2s ease;
+}
+
+/* 一级分类图标 */
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="1"] .anticon {
+  color: #1890ff !important;
+  filter: drop-shadow(0 2px 4px rgba(24, 144, 255, 0.3));
+}
+
+/* 二级分类图标 */
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="2"] .anticon {
+  color: #faad14 !important;
+  filter: drop-shadow(0 2px 4px rgba(250, 173, 20, 0.3));
+}
+
+/* 三级分类图标 */
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="3"] .anticon {
+  color: #52c41a !important;
+  filter: drop-shadow(0 2px 4px rgba(82, 196, 26, 0.3));
+}
+
+/* 展开/收起按钮 */
+.custom-taxonomy-tree .ant-tree-switcher {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: #8c8c8c;
+  border-radius: 6px;
+}
+
+.custom-taxonomy-tree .ant-tree-switcher:hover {
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.custom-taxonomy-tree .ant-tree-switcher .anticon {
+  font-size: 14px;
+}
+
+/* 连接线样式 */
+.custom-taxonomy-tree .ant-tree-indent-unit {
+  width: 28px;
+}
+
+.custom-taxonomy-tree .ant-tree-indent-unit::before {
+  border-right: 2px solid #e8e8e8;
+}
+
+/* 不同层级的额外样式 */
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="1"] .custom-tree-node {
+  font-size: 15px;
+}
+
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="2"] .custom-tree-node {
+  font-size: 14px;
+}
+
+.custom-taxonomy-tree .ant-tree-treenode[aria-level="3"] .custom-tree-node {
+  font-size: 13.5px;
+}
+
+/* 聚焦样式 */
+.custom-taxonomy-tree .ant-tree-node-content-wrapper:focus {
+  outline: 2px solid rgba(24, 144, 255, 0.3);
+  outline-offset: 2px;
+}
+
+/* 淡入动画 */
+.custom-taxonomy-tree .ant-tree-treenode {
+  animation: treeNodeSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes treeNodeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

@@ -13,7 +13,12 @@ class PendingFAQ(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     question = Column(Text, nullable=False, comment="AI提取的原始问题")
     answer = Column(Text, nullable=False, comment="AI提取的原始答案")
-    status = Column(String(20), nullable=False, default="pending", comment="状态: pending, processed, discarded")
+    status = Column(
+        String(20),
+        nullable=False,
+        default="pending",
+        comment="状态: pending, processed, discarded, auto_rejected",
+    )
     source_group_code = Column(String(2), nullable=True, comment="来源场景编码")
     source_call_id = Column(String(64), nullable=True, comment="来源对话的call_id")
     source_conversation_text = Column(Text, nullable=True, comment="聚合后的原始对话全文")
@@ -53,4 +58,3 @@ class KnowledgeItem(Base):
         default=datetime.utcnow,
         onupdate=func.now(),
     )
-

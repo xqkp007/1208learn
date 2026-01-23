@@ -229,6 +229,8 @@ class AicoSettings(BaseModel):
         )
     )
     chatbot_api_key: str = Field(default=_get_env_value("AICO_CHATBOT_API_KEY", default=""))
+    auto_review_url: str = Field(default=_get_env_value("AICO_AUTO_REVIEW_URL", default=""))
+    compare_review_url: str = Field(default=_get_env_value("AICO_COMPARE_REVIEW_URL", default=""))
 
 
 class AuthSettings(BaseModel):

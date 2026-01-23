@@ -25,7 +25,7 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const from = (location.state as { from?: Location })?.from?.pathname || '/review';
+  const from = (location.state as { from?: Location })?.from?.pathname || '/taxonomy';
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true);
@@ -114,4 +114,3 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
-

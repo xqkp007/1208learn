@@ -5,6 +5,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from ..core.logging import get_logger
 from ..core.settings import get_settings
+from ..services.compare_kb_sync import CompareKbSyncService
 from ..services.dialog_etl import DialogETLService
 from ..services.faq_extraction import FAQExtractionService
 
@@ -18,6 +19,7 @@ class SchedulerManager:
         self.scheduler = AsyncIOScheduler(timezone=settings.scheduler.timezone)
         self.etl_service = DialogETLService()
         self.faq_service = FAQExtractionService()
+        self.compare_sync_service = CompareKbSyncService()
         self._configure_jobs()
 
     def _configure_jobs(self) -> None:
@@ -70,3 +72,5 @@ class SchedulerManager:
     def _run_daily_faq_extraction(self) -> None:
         logger.info("Scheduled FAQ extraction triggered.")
         self.faq_service.run()
+        logger.info("Scheduled compare KB sync triggered.")
+        self.compare_sync_service.run()

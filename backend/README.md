@@ -70,6 +70,19 @@ pip install --upgrade pip
 pip install -r backend/requirements.txt
 ```
 
+## DB 初始化（V1.12 分类知识库）
+
+在目标 MySQL 库执行：`backend/sql/kb_taxonomy_v1_12.sql`
+
+## DB 初始化（V1.14 三级分类审核工作台）
+
+在目标 MySQL 库执行：`backend/sql/kb_taxonomy_review_v1_14.sql`
+
+## 数据导入格式（CSV/XLSX）
+
+- 固定列：`业务域, 一级, 二级, 三级, 定义`
+- 动态案例列：列名以 `案例` 开头（如 `案例1, 案例2...`），空值忽略
+
 ## Run the service
 ```bash
 uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload

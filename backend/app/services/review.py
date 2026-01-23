@@ -114,6 +114,8 @@ class ReviewService:
             pending = session.get(PendingFAQ, pending_faq_id)
             if pending is None:
                 raise NotFoundError(f"Pending FAQ {pending_faq_id} not found")
+            if pending.status != "pending":
+                raise ValueError(f"Pending FAQ {pending_faq_id} is already {pending.status}")
             if allowed_group_code and pending.source_group_code != allowed_group_code:
                 raise PermissionError(
                     f"Pending FAQ {pending_faq_id} does not belong to the allowed group {allowed_group_code}"
