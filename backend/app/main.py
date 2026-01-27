@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -36,15 +37,36 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, docs_url="/docs", redoc_url="/redoc", lifespan=lifespan)
 
-origins = [
+def _parse_env_bool(key: str, default: bool) -> bool:
+    raw = os.getenv(key)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _parse_env_csv(key: str) -> list[str]:
+    raw = os.getenv(key, "")
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+# CORS:
+# - Dev defaults only allow the local Vite dev server.
+# - In prod, set `CORS_ALLOW_ORIGINS` (comma-separated) to your frontend origins, e.g.
+#   "https://app.example.com,http://app.example.com:5176"
+origins = _parse_env_csv("CORS_ALLOW_ORIGINS") or [
     "http://127.0.0.1:5176",
     "http://localhost:5176",
 ]
+origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX") or None
+allow_credentials = _parse_env_bool("CORS_ALLOW_CREDENTIALS", default=True)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_origin_regex=origin_regex,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
