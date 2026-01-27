@@ -4,23 +4,7 @@
 
 [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
 
-  VITE v5.4.21  ready in 143 ms
+  VITE v5.4.21  ready in 130 ms
 
   ➜  Local:   http://localhost:5176/
   ➜  Network: use --host to expose
-6:04:15 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:04:30 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:04:44 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:05:48 PM [vite] hmr update /src/styles.css
-6:07:48 PM [vite] hmr update /src/styles.css
-6:08:12 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:08:30 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:08:54 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:09:19 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:10:08 PM [vite] hmr update /src/styles.css
-6:20:27 PM [vite] hmr update /src/pages/TaxonomyKBPage.tsx
-6:20:50 PM [vite] hmr update /src/styles.css
-7:11:17 PM [vite] hmr update /src/App.tsx
-7:20:29 PM [vite] hmr update /src/pages/TaxonomyReviewWorkbenchPage.tsx
-7:22:09 PM [vite] hmr update /src/pages/TaxonomyReviewWorkbenchPage.tsx
-4:45:26 PM [vite] hmr update /src/pages/InternalTasksPage.tsx

@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
 
-export const API_BASE_URL = 'http://127.0.0.1:8011';
+const DEFAULT_LOCAL_BASE_URL = 'http://127.0.0.1:8011';
+const envBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+export const API_BASE_URL =
+  envBaseUrl?.trim() || (import.meta.env.DEV ? DEFAULT_LOCAL_BASE_URL : '');
 const LOGIN_PATH = '/login';
 
 export const apiClient = axios.create({
