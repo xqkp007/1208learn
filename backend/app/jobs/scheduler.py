@@ -22,6 +22,19 @@ class SchedulerManager:
         self.compare_sync_service = CompareKbSyncService()
         self._configure_jobs()
 
+    def _log_job_plan(self) -> None:
+        jobs = self.scheduler.get_jobs()
+        if not jobs:
+            logger.warning("Scheduler has no jobs configured.")
+            return
+        for job in jobs:
+            logger.info(
+                "Scheduler job configured: id=%s next_run_time=%s trigger=%s",
+                job.id,
+                job.next_run_time,
+                job.trigger,
+            )
+
     def _configure_jobs(self) -> None:
         etl_trigger = CronTrigger.from_crontab(
             settings.scheduler.cron_expression,
@@ -58,6 +71,7 @@ class SchedulerManager:
                 settings.scheduler.timezone,
             )
             self.scheduler.start()
+            self._log_job_plan()
 
     def shutdown(self) -> None:
         if self.scheduler.running:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -24,6 +25,48 @@ router = APIRouter(prefix="/api/v1.10/admin", tags=["admin"])
 etl_service = DialogETLService()
 faq_service = FAQExtractionService()
 compare_sync_service = CompareKbSyncService()
+
+_JOB_LOCK = threading.Lock()
+
+
+@dataclass(frozen=True)
+class _RunningJob:
+    job_id: str
+    started_at: datetime
+    thread: threading.Thread
+
+
+_RUNNING_JOBS: dict[str, _RunningJob] = {}
+
+
+def _get_running_job(kind: str) -> Optional[_RunningJob]:
+    job = _RUNNING_JOBS.get(kind)
+    if job is None:
+        return None
+    if job.thread.is_alive():
+        return job
+    _RUNNING_JOBS.pop(kind, None)
+    return None
+
+
+def _clear_running_job(kind: str, job_id: str) -> None:
+    job = _RUNNING_JOBS.get(kind)
+    if job is None or job.job_id != job_id:
+        return
+    _RUNNING_JOBS.pop(kind, None)
+
+
+def _ensure_single_flight(kind: str) -> None:
+    running = _get_running_job(kind)
+    if running is None:
+        return
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            f"{kind} job already running: jobId={running.job_id} "
+            f"startedAt={running.started_at.isoformat()}"
+        ),
+    )
 
 
 class TriggerAggregationRequest(BaseModel):
@@ -66,26 +109,44 @@ def _coerce_range_to_dates(start: datetime, end: datetime) -> tuple[datetime, da
 
 
 def _run_aggregation_job(job_id: str, start_time: datetime, end_time: datetime) -> None:
-    logger.info("Admin aggregation job %s started: %s -> %s", job_id, start_time, end_time)
-    current = start_time.date()
-    last = (end_time - timedelta(microseconds=1)).date()
-    while current <= last:
-        etl_service.run_for_date(current)
-        current += timedelta(days=1)
-    logger.info("Admin aggregation job %s completed", job_id)
+    try:
+        logger.info("Admin aggregation job %s started: %s -> %s", job_id, start_time, end_time)
+        current = start_time.date()
+        last = (end_time - timedelta(microseconds=1)).date()
+        while current <= last:
+            etl_service.run_for_date(current)
+            current += timedelta(days=1)
+        logger.info("Admin aggregation job %s completed", job_id)
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("Admin aggregation job %s failed", job_id)
+    finally:
+        with _JOB_LOCK:
+            _clear_running_job("aggregation", job_id)
 
 
 def _run_extraction_job(job_id: str, limit: Optional[int]) -> None:
-    logger.info("Admin extraction job %s started (limit=%s)", job_id, limit)
-    faq_service.run(limit=limit)
-    compare_sync_service.run()
-    logger.info("Admin extraction job %s completed", job_id)
+    try:
+        logger.info("Admin extraction job %s started (limit=%s)", job_id, limit)
+        faq_service.run(limit=limit)
+        compare_sync_service.run()
+        logger.info("Admin extraction job %s completed", job_id)
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("Admin extraction job %s failed", job_id)
+    finally:
+        with _JOB_LOCK:
+            _clear_running_job("extraction", job_id)
 
 
 def _run_compare_kb_sync_job(job_id: str) -> None:
-    logger.info("Admin compare KB sync job %s started", job_id)
-    compare_sync_service.run()
-    logger.info("Admin compare KB sync job %s completed", job_id)
+    try:
+        logger.info("Admin compare KB sync job %s started", job_id)
+        compare_sync_service.run()
+        logger.info("Admin compare KB sync job %s completed", job_id)
+    except Exception:  # pylint: disable=broad-except
+        logger.exception("Admin compare KB sync job %s failed", job_id)
+    finally:
+        with _JOB_LOCK:
+            _clear_running_job("compare_kb_sync", job_id)
 
 
 @router.post(
@@ -103,13 +164,20 @@ def trigger_aggregation(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
-    job_id = f"agg-{uuid.uuid4().hex}"
-    thread = threading.Thread(
-        target=_run_aggregation_job,
-        args=(job_id, start_time, end_time),
-        daemon=True,
-    )
-    thread.start()
+    with _JOB_LOCK:
+        _ensure_single_flight("aggregation")
+        job_id = f"agg-{uuid.uuid4().hex}"
+        thread = threading.Thread(
+            target=_run_aggregation_job,
+            args=(job_id, start_time, end_time),
+            daemon=True,
+        )
+        _RUNNING_JOBS["aggregation"] = _RunningJob(
+            job_id=job_id,
+            started_at=datetime.utcnow(),
+            thread=thread,
+        )
+        thread.start()
 
     return TriggerJobResponse(
         jobId=job_id,
@@ -127,13 +195,20 @@ def trigger_extraction(
     current_user: User = Depends(get_current_user),
 ) -> TriggerJobResponse:
     _ = current_user  # login-only gate, no RBAC in v1.10
-    job_id = f"ext-{uuid.uuid4().hex}"
-    thread = threading.Thread(
-        target=_run_extraction_job,
-        args=(job_id, body.limit),
-        daemon=True,
-    )
-    thread.start()
+    with _JOB_LOCK:
+        _ensure_single_flight("extraction")
+        job_id = f"ext-{uuid.uuid4().hex}"
+        thread = threading.Thread(
+            target=_run_extraction_job,
+            args=(job_id, body.limit),
+            daemon=True,
+        )
+        _RUNNING_JOBS["extraction"] = _RunningJob(
+            job_id=job_id,
+            started_at=datetime.utcnow(),
+            thread=thread,
+        )
+        thread.start()
 
     return TriggerJobResponse(
         jobId=job_id,
@@ -150,13 +225,20 @@ def trigger_compare_kb_sync(
     current_user: User = Depends(get_current_user),
 ) -> TriggerJobResponse:
     _ = current_user  # login-only gate, no RBAC in v1.10
-    job_id = f"compare-sync-{uuid.uuid4().hex}"
-    thread = threading.Thread(
-        target=_run_compare_kb_sync_job,
-        args=(job_id,),
-        daemon=True,
-    )
-    thread.start()
+    with _JOB_LOCK:
+        _ensure_single_flight("compare_kb_sync")
+        job_id = f"compare-sync-{uuid.uuid4().hex}"
+        thread = threading.Thread(
+            target=_run_compare_kb_sync_job,
+            args=(job_id,),
+            daemon=True,
+        )
+        _RUNNING_JOBS["compare_kb_sync"] = _RunningJob(
+            job_id=job_id,
+            started_at=datetime.utcnow(),
+            thread=thread,
+        )
+        thread.start()
 
     return TriggerJobResponse(
         jobId=job_id,
